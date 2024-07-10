@@ -5,12 +5,12 @@ import 'alexaquery_types.dart';
 
 class QueryClient {
   static final String _browser = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0";
-  static final Uri url = Uri.parse("https://amazon.co.uk");
   late final Map<String, String> _cookies;
   String _csrf = "";
   late final Dio _client;
   late final File _cookieFile;
 
+  /// Creates a new [QueryClient] instance.
   QueryClient(this._cookieFile) {
     try {
       final cookies = _cookieFile.readAsStringSync();
@@ -32,7 +32,7 @@ class QueryClient {
     ));
   }
 
-  String parseCookiesFromJson(Map<String, dynamic> json) {
+  String _parseCookiesFromJson(Map<String, dynamic> json) {
     final Map<String, dynamic> cookiesMap = json['response']['tokens']['cookies'];
 
     String cookies = "";
@@ -49,6 +49,9 @@ class QueryClient {
     return cookies;
   }
 
+  /// Checks the status of the user with the given [userId].
+  ///
+  /// Returns a [Future] that resolves to a [bool] indicating whether the user is logged in.
   Future<bool> checkStatus(String userId) async {
     var response = await _client.get(
       "https://alexa.amazon.co.uk/api/bootstrap?version=0",
@@ -64,6 +67,10 @@ class QueryClient {
     return response.statusCode == 200;
   }
 
+  /// Retrieves Amazon cookie using [token].
+  ///
+  /// Throws an [Exception] if a CSRF token is not found during the process.
+  /// Otherwise, returns a [Future] that resolves to a [bool] indicating whether the login was successful.
   Future<bool?> login(String userId, String token) async {
     print("Logging in user: $userId");
 
@@ -95,7 +102,7 @@ class QueryClient {
       return false;
     }
 
-    _cookies[userId] = parseCookiesFromJson(response.data);
+    _cookies[userId] = _parseCookiesFromJson(response.data);
 
     List<String> csrfUrls = [
       "https://alexa.amazon.co.uk/api/language",
@@ -139,6 +146,9 @@ class QueryClient {
     return true;
   }
 
+  /// Retrieves a list of devices associated with the specified user ID.
+  ///
+  /// Returns a [Future] that resolves to a list of [Device] objects.
   Future<List<Device>> getDeviceList(String userId) async {
     final response = await _client.get("https://alexa.amazon.co.uk/api/devices-v2/device?cached=false",
         options: Options(
@@ -169,6 +179,9 @@ class QueryClient {
     return filteredDevices;
   }
 
+  /// Retrieves a list of notifications associated with the specified user ID.
+  ///
+  /// Returns a [Future] that resolves to a list of [Notification] objects.
   Future<List<Notification>> getNotifications(String userId) async {
     final response = await _client.get("https://alexa.amazon.co.uk/api/notifications",
         options: Options(
@@ -188,6 +201,12 @@ class QueryClient {
         .toList();
   }
 
+  /// Retrieves the player queue associated with the specified user ID.
+  ///
+  /// The [serialNumber] and [deviceType] parameters are used to identify the device.
+  /// These can be obtained from the [Device] object.
+  ///
+  /// Returns a [Future] that resolves to a [PlayerInfo] object.
   Future<PlayerInfo> getQueue(String userId, String serialNumber, String deviceType) async {
     final url = "https://alexa.amazon.co.uk/api/np/player?deviceSerialNumber=$serialNumber&deviceType=$deviceType";
     final response = await _client.get(url,

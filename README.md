@@ -1,39 +1,44 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Alexa Query
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages). 
+A Dart library for querying Alexa devices.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages). 
--->
+## API Reference
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+All client methods return a Future.
 
-## Features
-
-TODO: List what your package can do. Maybe include images, gifs, or videos.
-
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+#### Initialize Query Client
 
 ```dart
-const like = 'sample';
+import "package:alexaquery_dart/alexaquery.dart";
+const client = new QueryClient(File("cookies.json"));
 ```
 
-## Additional information
+#### Login
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+```dart
+await client.login(userId, amazon_refresh_token);
+```
+
+#### Check Login Status
+
+```dart
+await client.checkStatus(userId);
+```
+
+#### Get Devices
+
+```dart
+await client.getDeviceList(userId);
+```
+
+#### Get Notifications
+
+```dart
+await client.getNotifications(userId);
+```
+
+#### Get Queue
+
+```dart
+await client.getQueue(userId, device);
+```

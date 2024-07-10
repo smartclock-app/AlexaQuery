@@ -1,3 +1,3 @@
-## 1.0.0
+# Changelog
 
-- Initial version.
+## [1.0.0] - 2024-07-10
