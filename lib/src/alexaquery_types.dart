@@ -1,4 +1,3 @@
-// Devices
 class Device {
   final String accountName;
   final String deviceType;
@@ -27,7 +26,6 @@ class Device {
   }
 }
 
-// Notifications
 class Notification {
   final String? alarmLabel;
   final int? alarmTime;
@@ -107,15 +105,14 @@ class Notification {
   }
 }
 
-// Queue
-class PlayerInfo {
-  final InfoText? infoText;
-  final MainArt? mainArt;
-  final Progress? progress;
-  final Provider? provider;
-  final String? state;
+class Queue {
+  InfoText? infoText;
+  MainArt? mainArt;
+  Progress? progress;
+  Provider? provider;
+  String? state;
 
-  PlayerInfo({
+  Queue({
     this.infoText,
     this.mainArt,
     this.progress,
@@ -123,100 +120,103 @@ class PlayerInfo {
     this.state,
   });
 
-  factory PlayerInfo.fromJson(Map<String, dynamic> json) {
-    return PlayerInfo(
-      infoText: InfoText.fromJson(json['infoText']),
-      mainArt: MainArt.fromJson(json['mainArt']),
-      progress: Progress.fromJson(json['progress']),
-      provider: Provider.fromJson(json['provider']),
-      state: json['state'],
-    );
-  }
+  factory Queue.empty() => Queue(
+        infoText: null,
+        mainArt: null,
+        progress: null,
+        provider: null,
+        state: null,
+      );
 
-  factory PlayerInfo.empty() {
-    return PlayerInfo(
-      infoText: InfoText(subText1: null, title: null),
-      mainArt: MainArt(url: null),
-      progress: Progress(mediaLength: null, mediaProgress: null),
-      provider: Provider(providerName: null),
-      state: null,
-    );
-  }
+  factory Queue.fromJson(Map<String, dynamic> json) => Queue(
+        infoText: json["infoText"] == null ? null : InfoText.fromJson(json["infoText"]),
+        mainArt: json["mainArt"] == null ? null : MainArt.fromJson(json["mainArt"]),
+        progress: json["progress"] == null ? null : Progress.fromJson(json["progress"]),
+        provider: json["provider"] == null ? null : Provider.fromJson(json["provider"]),
+        state: json["state"],
+      );
 
-  @override
-  String toString() {
-    return "PlayerInfo(infoText: $infoText, mainArt: $mainArt, progress: $progress, provider: $provider, state: $state)";
-  }
+  Map<String, dynamic> toJson() => {
+        "infoText": infoText?.toJson(),
+        "mainArt": mainArt?.toJson(),
+        "progress": progress?.toJson(),
+        "provider": provider?.toJson(),
+        "state": state,
+      };
 }
 
 class InfoText {
-  final String? subText1;
-  final String? title;
+  String? subText1;
+  dynamic subText2;
+  String? title;
 
-  InfoText({this.subText1, this.title});
+  InfoText({
+    this.subText1,
+    this.subText2,
+    this.title,
+  });
 
-  factory InfoText.fromJson(Map<String, dynamic> json) {
-    return InfoText(
-      subText1: json['subText1'],
-      title: json['title'],
-    );
-  }
+  factory InfoText.fromJson(Map<String, dynamic> json) => InfoText(
+        subText1: json["subText1"],
+        subText2: json["subText2"],
+        title: json["title"],
+      );
 
-  @override
-  String toString() {
-    return "InfoText(subText1: $subText1, title: $title)";
-  }
+  Map<String, dynamic> toJson() => {
+        "subText1": subText1,
+        "subText2": subText2,
+        "title": title,
+      };
 }
 
 class MainArt {
-  final String? url;
+  String? url;
 
-  MainArt({this.url});
+  MainArt({
+    this.url,
+  });
 
-  factory MainArt.fromJson(Map<String, dynamic> json) {
-    return MainArt(
-      url: json['url'],
-    );
-  }
+  factory MainArt.fromJson(Map<String, dynamic> json) => MainArt(
+        url: json["url"],
+      );
 
-  @override
-  String toString() {
-    return "MainArt(url: $url)";
-  }
+  Map<String, dynamic> toJson() => {
+        "url": url,
+      };
 }
 
 class Progress {
-  final int? mediaLength;
-  final int? mediaProgress;
+  int? mediaLength;
+  int? mediaProgress;
 
-  Progress({this.mediaLength, this.mediaProgress});
+  Progress({
+    this.mediaLength,
+    this.mediaProgress,
+  });
 
-  factory Progress.fromJson(Map<String, dynamic> json) {
-    return Progress(
-      mediaLength: json['mediaLength'],
-      mediaProgress: json['mediaProgress'],
-    );
-  }
+  factory Progress.fromJson(Map<String, dynamic> json) => Progress(
+        mediaLength: json["mediaLength"],
+        mediaProgress: json["mediaProgress"],
+      );
 
-  @override
-  String toString() {
-    return "Progress(mediaLength: $mediaLength, mediaProgress: $mediaProgress)";
-  }
+  Map<String, dynamic> toJson() => {
+        "mediaLength": mediaLength,
+        "mediaProgress": mediaProgress,
+      };
 }
 
 class Provider {
-  final String? providerName;
+  String? providerDisplayName;
 
-  Provider({this.providerName});
+  Provider({
+    this.providerDisplayName,
+  });
 
-  factory Provider.fromJson(Map<String, dynamic> json) {
-    return Provider(
-      providerName: json['providerName'],
-    );
-  }
+  factory Provider.fromJson(Map<String, dynamic> json) => Provider(
+        providerDisplayName: json["providerDisplayName"],
+      );
 
-  @override
-  String toString() {
-    return "Provider(providerName: $providerName)";
-  }
+  Map<String, dynamic> toJson() => {
+        "providerDisplayName": providerDisplayName,
+      };
 }

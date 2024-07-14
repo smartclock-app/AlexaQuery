@@ -148,8 +148,11 @@ class QueryClient {
 
   /// Retrieves a list of devices associated with the specified user ID.
   ///
-  /// Returns a [Future] that resolves to a list of [Device] objects.
+  /// Throws an [Exception] if the user is not logged in.
+  /// Otherwise, returns a [Future] that resolves to a list of [Device] objects.
   Future<List<Device>> getDeviceList(String userId) async {
+    if (_cookies[userId] == null) throw Exception("User not logged in");
+
     final response = await _client.get("https://alexa.amazon.co.uk/api/devices-v2/device?cached=false",
         options: Options(
           headers: {
@@ -181,8 +184,11 @@ class QueryClient {
 
   /// Retrieves a list of notifications associated with the specified user ID.
   ///
-  /// Returns a [Future] that resolves to a list of [Notification] objects.
+  /// Throws an [Exception] if the user is not logged in.
+  /// Otherwise, returns a [Future] that resolves to a list of [Notification] objects.
   Future<List<Notification>> getNotifications(String userId) async {
+    if (_cookies[userId] == null) throw Exception("User not logged in");
+
     final response = await _client.get("https://alexa.amazon.co.uk/api/notifications",
         options: Options(
           headers: {
@@ -206,8 +212,11 @@ class QueryClient {
   /// The [serialNumber] and [deviceType] parameters are used to identify the device.
   /// These can be obtained from the [Device] object.
   ///
-  /// Returns a [Future] that resolves to a [PlayerInfo] object.
-  Future<PlayerInfo> getQueue(String userId, String serialNumber, String deviceType) async {
+  /// Throws an [Exception] if the user is not logged in.
+  /// Otherwise, eturns a [Future] that resolves to a [Queue] object.
+  Future<Queue> getQueue(String userId, String serialNumber, String deviceType) async {
+    if (_cookies[userId] == null) throw Exception("User not logged in");
+
     final url = "https://alexa.amazon.co.uk/api/np/player?deviceSerialNumber=$serialNumber&deviceType=$deviceType";
     final response = await _client.get(url,
         options: Options(
@@ -222,12 +231,10 @@ class QueryClient {
           },
         ));
 
-    print(response.data["playerInfo"]);
-
     if (response.data["playerInfo"] == null || response.data["playerInfo"]['state'] == null) {
-      return PlayerInfo.empty();
+      return Queue.empty();
     }
 
-    return PlayerInfo.fromJson(response.data["playerInfo"]);
+    return Queue.fromJson(response.data["playerInfo"]);
   }
 }

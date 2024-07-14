@@ -1,9 +1,11 @@
 import 'dart:io';
 
 import 'package:alexaquery_dart/alexaquery_dart.dart';
+import 'package:dotenv/dotenv.dart';
 import 'package:test/test.dart';
 
 void main() {
+  var env = DotEnv(includePlatformEnvironment: true)..load();
   group('A group of tests', () {
     final alexaQuery = QueryClient(File('cookies.txt'));
 
@@ -12,7 +14,7 @@ void main() {
     });
 
     test('Login function', () async {
-      String refreshToken = Platform.environment["TOKEN"]!;
+      String refreshToken = env["TOKEN"]!;
 
       expect(
         await alexaQuery.login(
