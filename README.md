@@ -10,35 +10,42 @@ All client methods return a Future.
 
 ```dart
 import "package:alexaquery_dart/alexaquery.dart";
-const client = new QueryClient(File("cookies.json"));
-```
-
-#### Login
-
-```dart
-await client.login(userId, amazon_refresh_token);
+final client = QueryClient(File("cookies.json"));
 ```
 
 #### Check Login Status
 
 ```dart
-await client.checkStatus(userId);
+bool isLoggedIn = await client.checkStatus(userId);
+```
+
+#### Login
+
+```dart
+bool loginSuccessful = await client.login(userId, amazon_refresh_token);
 ```
 
 #### Get Devices
 
 ```dart
-await client.getDeviceList(userId);
+List<Device> devices = await client.getDeviceList(userId);
+for(var device in devices) {
+  print(device.accountName);
+}
 ```
 
 #### Get Notifications
 
 ```dart
-await client.getNotifications(userId);
+List<Notification> notifications = await client.getNotifications(userId);
+for(var n in notifications) {
+  print(n.type);
+}
 ```
 
 #### Get Queue
 
 ```dart
-await client.getQueue(userId, device);
+Device device = getDevice();
+Queue queue = await client.getQueue(userId, device.serialNumber, device.deviceType);
 ```

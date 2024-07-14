@@ -69,6 +69,8 @@ class QueryClient {
 
   /// Retrieves Amazon cookie using [token].
   ///
+  /// Calls [checkStatus] to check if the user is already logged in before proceeding.
+  ///
   /// Throws an [Exception] if a CSRF token is not found during the process.
   /// Otherwise, returns a [Future] that resolves to a [bool] indicating whether the login was successful.
   Future<bool?> login(String userId, String token) async {
