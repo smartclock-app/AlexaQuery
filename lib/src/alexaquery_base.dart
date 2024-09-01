@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 import 'alexaquery_types.dart';
 
@@ -12,15 +13,18 @@ class QueryClient {
 
   /// Creates a new [QueryClient] instance.
   QueryClient(this._cookieFile) {
+    if (!_cookieFile.existsSync()) throw Exception("Cookie file not found");
     try {
       final cookies = _cookieFile.readAsStringSync();
       if (cookies.isNotEmpty) {
         _cookies = jsonDecode(cookies).cast<String, String>();
         print("Loaded cookies from file");
       } else {
+        print("Cookie file empty");
         _cookies = {};
       }
     } catch (e) {
+      print("Error loading cookie file: $e");
       _cookies = {};
     }
 
@@ -232,11 +236,12 @@ class QueryClient {
             "csrf": _csrf,
           },
         ));
+    final timestamp = DateFormat('E, d MMM yyyy hh:mm:ss Z', 'en_US').parse(response.headers.value("Date")!);
 
     if (response.data["playerInfo"] == null || response.data["playerInfo"]['state'] == null) {
       return Queue.empty();
     }
 
-    return Queue.fromJson(response.data["playerInfo"]);
+    return Queue.fromJson(response.data["playerInfo"], timestamp);
   }
 }

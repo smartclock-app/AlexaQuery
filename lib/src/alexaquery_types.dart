@@ -111,6 +111,7 @@ class Queue {
   Progress? progress;
   Provider? provider;
   String? state;
+  DateTime? timestamp;
 
   Queue({
     this.infoText,
@@ -118,6 +119,7 @@ class Queue {
     this.progress,
     this.provider,
     this.state,
+    this.timestamp,
   });
 
   factory Queue.empty() => Queue(
@@ -126,14 +128,16 @@ class Queue {
         progress: null,
         provider: null,
         state: null,
+        timestamp: null,
       );
 
-  factory Queue.fromJson(Map<String, dynamic> json) => Queue(
+  factory Queue.fromJson(Map<String, dynamic> json, DateTime? timestamp) => Queue(
         infoText: json["infoText"] == null ? null : InfoText.fromJson(json["infoText"]),
         mainArt: json["mainArt"] == null ? null : MainArt.fromJson(json["mainArt"]),
         progress: json["progress"] == null ? null : Progress.fromJson(json["progress"]),
         provider: json["provider"] == null ? null : Provider.fromJson(json["provider"]),
         state: json["state"],
+        timestamp: timestamp,
       );
 
   Map<String, dynamic> toJson() => {
@@ -142,6 +146,7 @@ class Queue {
         "progress": progress?.toJson(),
         "provider": provider?.toJson(),
         "state": state,
+        "timestamp": timestamp?.toIso8601String(),
       };
 }
 
