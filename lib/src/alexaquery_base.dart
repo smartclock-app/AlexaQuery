@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 import 'alexaquery_types.dart';
 
@@ -218,6 +217,8 @@ class QueryClient {
   /// The [serialNumber] and [deviceType] parameters are used to identify the device.
   /// These can be obtained from the [Device] object.
   ///
+  /// Includes a timestamp from the Date header in UTC.
+  ///
   /// Throws an [Exception] if the user is not logged in.
   /// Otherwise, eturns a [Future] that resolves to a [Queue] object.
   Future<Queue> getQueue(String userId, String serialNumber, String deviceType) async {
@@ -236,7 +237,8 @@ class QueryClient {
             "csrf": _csrf,
           },
         ));
-    final timestamp = DateFormat('E, d MMM yyyy hh:mm:ss Z', 'en_US').parse(response.headers.value("Date")!);
+
+    DateTime timestamp = HttpDate.parse(response.headers.value("Date")!);
 
     if (response.data["playerInfo"] == null || response.data["playerInfo"]['state'] == null) {
       return Queue.empty();
