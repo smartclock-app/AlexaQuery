@@ -218,7 +218,7 @@ class Provider {
   });
 
   factory Provider.fromJson(Map<String, dynamic> json) => Provider(
-        providerDisplayName: json["providerDisplayName"],
+        providerDisplayName: json["providerDisplayName"] ?? json["providerName"],
       );
 
   Map<String, dynamic> toJson() => {

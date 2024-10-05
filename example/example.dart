@@ -5,5 +5,6 @@ void main() async {
   final alexaQuery = QueryClient(File('cookies.txt'));
   var devices = await alexaQuery.getDeviceList("testuser");
   print(devices[1]);
-  var _ = await alexaQuery.getQueue("testuser", devices[1].serialNumber, devices[1].deviceType);
+  var queue = await alexaQuery.getQueue("testuser", devices[1].serialNumber, devices[1].deviceType);
+  print(queue.provider?.providerDisplayName);
 }
