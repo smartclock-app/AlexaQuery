@@ -3,12 +3,14 @@ class Device {
   final String deviceType;
   final String serialNumber;
   final String deviceFamily;
+  final List<String> parentClusters;
 
   Device({
     required this.accountName,
     required this.deviceType,
     required this.serialNumber,
     required this.deviceFamily,
+    required this.parentClusters,
   });
 
   factory Device.fromJson(Map<String, dynamic> json) {
@@ -17,12 +19,13 @@ class Device {
       deviceType: json['deviceType'],
       serialNumber: json['serialNumber'],
       deviceFamily: json['deviceFamily'],
+      parentClusters: json['parentClusters'] == null ? [] : List<String>.from(json['parentClusters']),
     );
   }
 
   @override
   String toString() {
-    return "Device(accountName: $accountName, deviceType: $deviceType, serialNumber: $serialNumber, deviceFamily: $deviceFamily)";
+    return "Device(accountName: $accountName, deviceType: $deviceType, serialNumber: $serialNumber, deviceFamily: $deviceFamily, parentClusters: $parentClusters)";
   }
 }
 

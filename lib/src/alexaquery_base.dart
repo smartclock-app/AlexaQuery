@@ -169,22 +169,23 @@ class QueryClient {
           },
         ));
 
-    const List<String> deviceFamilies = ["ECHO", "ROOK", "KNIGHT"];
+    // const List<String> deviceFamilies = ["ECHO", "ROOK", "KNIGHT"];
 
-    final List<Device> filteredDevices = (response.data["devices"] as List<dynamic>)
-        .where((device) {
-          return deviceFamilies.contains(device["deviceFamily"]);
-        })
+    final List<Device> devices = (response.data["devices"] as List<dynamic>)
+        // .where((device) {
+        //   return deviceFamilies.contains(device["deviceFamily"]);
+        // })
         .map((device) => Device(
               accountName: device['accountName']!,
               deviceFamily: device['deviceFamily']!,
               deviceType: device['deviceType']!,
               serialNumber: device['serialNumber']!,
+              parentClusters: device['parentClusters'] == null ? [] : List<String>.from(device['parentClusters']),
             ))
         .toList();
 
-    filteredDevices.sort((a, b) => a.accountName.compareTo(b.accountName));
-    return filteredDevices;
+    devices.sort((a, b) => a.accountName.compareTo(b.accountName));
+    return devices;
   }
 
   /// Retrieves a list of notifications associated with the specified user ID.
@@ -221,10 +222,21 @@ class QueryClient {
   ///
   /// Throws an [Exception] if the user is not logged in.
   /// Otherwise, eturns a [Future] that resolves to a [Queue] object.
-  Future<Queue> getQueue(String userId, String serialNumber, String deviceType) async {
+  Future<Queue> getQueue(String userId, String deviceName) async {
     if (_cookies[userId] == null) throw Exception("User not logged in");
 
-    final url = "https://alexa.amazon.co.uk/api/np/player?deviceSerialNumber=$serialNumber&deviceType=$deviceType";
+    final devices = await getDeviceList(userId);
+    final device = devices.firstWhere((device) => device.accountName == deviceName);
+
+    String parent = "";
+    final parentId = device.parentClusters.isNotEmpty ? device.parentClusters.first : null;
+    if (parentId != null) {
+      final parentDevice = devices.firstWhere((device) => device.serialNumber == parentId);
+      parent = "&lemurId=$parentId&lemurDeviceType=${parentDevice.deviceType}";
+    }
+
+    final url =
+        "https://alexa.amazon.co.uk/api/np/player?deviceSerialNumber=${device.serialNumber}&deviceType=${device.deviceType}$parent";
     final response = await _client.get(url,
         options: Options(
           headers: {

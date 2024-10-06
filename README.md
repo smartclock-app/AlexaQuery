@@ -47,5 +47,5 @@ for(var n in notifications) {
 
 ```dart
 Device device = getDevice();
-Queue queue = await client.getQueue(userId, device.serialNumber, device.deviceType);
+Queue queue = await client.getQueue(userId, device.accountName);
 ```
