@@ -27,6 +27,18 @@ class Device {
   String toString() {
     return "Device(accountName: $accountName, deviceType: $deviceType, serialNumber: $serialNumber, deviceFamily: $deviceFamily, parentClusters: $parentClusters)";
   }
+
+  factory Device.empty() {
+    return Device(
+      accountName: "",
+      deviceType: "",
+      serialNumber: "",
+      deviceFamily: "",
+      parentClusters: [],
+    );
+  }
+
+  bool get isEmpty => accountName.isEmpty || deviceType.isEmpty || serialNumber.isEmpty || deviceFamily.isEmpty;
 }
 
 class Notification {

@@ -18,3 +18,8 @@ INTERFACE CHANGED:
 
 - client.getQueue now takes device name as argument instead of serial/type.
 - client.getDevices no longer filters devices.
+
+## [2.1.0] - 2024-10-07
+
+Added Device.empty() factory and accompanying Device.isEmpty getter.
+This accounts for cases where the Device list in the config is empty.

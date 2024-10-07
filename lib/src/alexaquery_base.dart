@@ -42,8 +42,7 @@ class QueryClient {
     for (final domain in cookiesMap.keys) {
       for (final cookieData in cookiesMap[domain]!) {
         // Remove leading and trailing quotes and spaces from cookie value
-        String cookieValue =
-            (cookieData['Value'] as String).replaceAll(RegExp(r'^[" ]+'), "").replaceAll(RegExp(r'[" ]$'), "");
+        String cookieValue = (cookieData['Value'] as String).replaceAll(RegExp(r'^[" ]+'), "").replaceAll(RegExp(r'[" ]$'), "");
 
         cookies += "${cookieData['Name']}=$cookieValue; ";
       }
@@ -208,9 +207,7 @@ class QueryClient {
           },
         ));
 
-    return (response.data["notifications"] as List<dynamic>)
-        .map<Notification>((notification) => Notification.fromJson(notification))
-        .toList();
+    return (response.data["notifications"] as List<dynamic>).map<Notification>((notification) => Notification.fromJson(notification)).toList();
   }
 
   /// Retrieves the player queue associated with the specified user ID.
@@ -226,7 +223,8 @@ class QueryClient {
     if (_cookies[userId] == null) throw Exception("User not logged in");
 
     final devices = await getDeviceList(userId);
-    final device = devices.firstWhere((device) => device.accountName == deviceName);
+    final device = devices.firstWhere((device) => device.accountName == deviceName, orElse: () => Device.empty());
+    if (device.isEmpty) return Queue.empty();
 
     String parent = "";
     final parentId = device.parentClusters.isNotEmpty ? device.parentClusters.first : null;
@@ -235,8 +233,7 @@ class QueryClient {
       parent = "&lemurId=$parentId&lemurDeviceType=${parentDevice.deviceType}";
     }
 
-    final url =
-        "https://alexa.amazon.co.uk/api/np/player?deviceSerialNumber=${device.serialNumber}&deviceType=${device.deviceType}$parent";
+    final url = "https://alexa.amazon.co.uk/api/np/player?deviceSerialNumber=${device.serialNumber}&deviceType=${device.deviceType}$parent";
     final response = await _client.get(url,
         options: Options(
           headers: {
