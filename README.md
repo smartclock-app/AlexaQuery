@@ -9,7 +9,7 @@ All client methods return a Future.
 #### Initialize Query Client
 
 ```dart
-import "package:alexaquery_dart/alexaquery.dart";
+import "package:alexaquery_dart/alexaquery_dart.dart";
 final client = QueryClient(File("cookies.json"));
 ```
 

@@ -23,3 +23,7 @@ INTERFACE CHANGED:
 
 Added Device.empty() factory and accompanying Device.isEmpty getter.
 This accounts for cases where the Device list in the config is empty.
+
+## [2.2.0] - 2024-10-09
+
+Added ability to change logger function (defaults to print with AlexaQuery\[$level\] prefix)

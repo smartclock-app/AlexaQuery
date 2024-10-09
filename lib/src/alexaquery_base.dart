@@ -10,20 +10,26 @@ class QueryClient {
   late final Dio _client;
   late final File _cookieFile;
 
+  /// Logger function.
+  /// By default, it prints logs to the console with the format: `AlexaQuery[$level]: $log`.
+  /// To disable logging, set this to an empty function.
+  Function(String log, String level) _logger = (String log, String info) => print("AlexaQuery[$info]: $log");
+
   /// Creates a new [QueryClient] instance.
-  QueryClient(this._cookieFile) {
+  QueryClient(this._cookieFile, {Function(String log, String level)? logger}) {
+    if (logger != null) _logger = logger;
     if (!_cookieFile.existsSync()) throw Exception("Cookie file not found");
     try {
       final cookies = _cookieFile.readAsStringSync();
       if (cookies.isNotEmpty) {
         _cookies = jsonDecode(cookies).cast<String, String>();
-        print("Loaded cookies from file");
+        _logger("Loaded cookies from file", "info");
       } else {
-        print("Cookie file empty");
+        _logger("Cookie file empty", "info");
         _cookies = {};
       }
     } catch (e) {
-      print("Error loading cookie file: $e");
+      _logger("Error loading cookie file: $e", "warn");
       _cookies = {};
     }
 
@@ -76,10 +82,10 @@ class QueryClient {
   /// Throws an [Exception] if a CSRF token is not found during the process.
   /// Otherwise, returns a [Future] that resolves to a [bool] indicating whether the login was successful.
   Future<bool?> login(String userId, String token) async {
-    print("Logging in user: $userId");
+    _logger("Logging in user: $userId", 'trace');
 
     if (await checkStatus(userId)) {
-      print("Already logged in");
+      _logger("Already logged in", 'trace');
       return true;
     }
 
@@ -102,7 +108,7 @@ class QueryClient {
     );
 
     if (response.statusCode != 200) {
-      print("Login failed with status code: ${response.statusCode}");
+      _logger("Login failed with status code: ${response.statusCode}", 'warn');
       return false;
     }
 
