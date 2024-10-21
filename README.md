@@ -1,6 +1,7 @@
 # Alexa Query
 
 A Dart library for querying Alexa devices.
+Designed for use with [SmartClock](https://github.com/smartclock-app/Clock)
 
 ## API Reference
 
@@ -10,13 +11,11 @@ All client methods return a Future.
 
 ```dart
 import "package:alexaquery_dart/alexaquery_dart.dart";
-final client = QueryClient(File("cookies.json"));
-```
-
-#### Check Login Status
-
-```dart
-bool isLoggedIn = await client.checkStatus(userId);
+final client = QueryClient(
+  File("cookies.json"),
+  loginToken: alexa_refresh_token, // optional
+  logger_function: (message, level) => print("[$level] $message"), //optional
+);
 ```
 
 #### Login
@@ -28,7 +27,7 @@ bool loginSuccessful = await client.login(userId, amazon_refresh_token);
 #### Get Devices
 
 ```dart
-List<Device> devices = await client.getDeviceList(userId);
+List<Device> devices = await client.getDevices(userId);
 for(var device in devices) {
   print(device.accountName);
 }
@@ -46,6 +45,6 @@ for(var n in notifications) {
 #### Get Queue
 
 ```dart
-Device device = getDevice();
-Queue queue = await client.getQueue(userId, device.accountName);
+List<Device> devices = await getDevices(userId);
+Queue queue = await client.getQueue(userId, devices.first.accountName);
 ```

@@ -6,8 +6,6 @@ void main() async {
     File('cookies.txt'),
     logger: (log, level) => print("$level: $log"),
   );
-  // var devices = await alexaQuery.getDeviceList("testuser");
-  // print(devices[1]);
   var devices = await alexaQuery.getDevices("testuser");
   print(devices);
 }

@@ -37,3 +37,8 @@ INTERFACE CHANGED:
 - `QueryClient.new` no longer throws if cookie file doesn't exist, instead creates it. (Will still throw if path doesn't exist)
 - `QueryClient.getDeviceList` has been renamed to `QueryClient.getDevices`.
 - `QueryClient.checkStatus` has been renamed to `QueryClient._checkStatus` and is no longer accessible from outside the class.
+
+## [3.0.1] - 2024-10-21
+
+Ensure `QueryClient._checkStatus` is only being called once within 15 seconds.
+This allows multiple multiple methods to share the same login attempt.

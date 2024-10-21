@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:mutex/mutex.dart';
 import 'alexaquery_types.dart';
 
 class QueryClient {
@@ -9,7 +11,9 @@ class QueryClient {
   String _csrf = "";
   late final Dio _client;
   late final File _cookieFile;
+  final Mutex _mutex = Mutex();
   String? loginToken;
+  DateTime? lastSucessfulLogin;
 
   /// Logger function.
   /// By default, it prints logs to the console with the format: `AlexaQuery[$level]: $log`.
@@ -17,9 +21,8 @@ class QueryClient {
   Function(String log, String level) _logger = (String log, String info) => print("AlexaQuery[$info]: $log");
 
   /// Creates a new [QueryClient] instance.
-  QueryClient(this._cookieFile, {Function(String log, String level)? logger, String? loginToken}) {
+  QueryClient(this._cookieFile, {Function(String log, String level)? logger, this.loginToken}) {
     if (logger != null) _logger = logger;
-    if (loginToken != null) this.loginToken = loginToken;
     if (!_cookieFile.existsSync()) _cookieFile.createSync();
     try {
       final cookies = _cookieFile.readAsStringSync();
@@ -86,8 +89,26 @@ class QueryClient {
   /// Throws an [Exception] if both [token] and [QueryClient.loginToken] are null.
   /// Otherwise, returns a [Future] that resolves to a [bool] indicating whether the login was successful.
   Future<bool?> login(String userId, String? token) async {
-    if (await _checkStatus(userId)) {
-      _logger("Check Status: $userId already logged in", 'trace');
+    final now = DateTime.now();
+
+    final status = await _mutex.protect(() async {
+      if (lastSucessfulLogin != null) {
+        final diff = now.difference(lastSucessfulLogin!);
+        if (diff.inSeconds < 15) {
+          return true;
+        }
+      }
+
+      if (await _checkStatus(userId)) {
+        _logger("Check Status: $userId logged in", 'trace');
+        lastSucessfulLogin = now;
+        return true;
+      } else {
+        return false;
+      }
+    });
+
+    if (status == true) {
       return true;
     }
 
@@ -165,6 +186,7 @@ class QueryClient {
 
     _cookieFile.writeAsStringSync(jsonEncode(_cookies), mode: FileMode.writeOnly);
 
+    lastSucessfulLogin = now;
     return true;
   }
 
@@ -211,6 +233,7 @@ class QueryClient {
   /// Throws an [Exception] if the user is not logged in.
   /// Otherwise, returns a [Future] that resolves to a list of [Notification] objects.
   Future<List<Notification>> getNotifications(String userId) async {
+    // if (_cookies[userId] == null) throw Exception("User not logged in");
     final isLoggedIn = await login(userId, null);
     if (!isLoggedIn!) throw Exception("User not logged in");
 
