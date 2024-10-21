@@ -10,7 +10,7 @@ void main() {
     final alexaQuery = QueryClient(File('cookies.txt'));
 
     test('Check Status', () async {
-      expect(await alexaQuery.checkStatus("testuser"), isFalse);
+      expect(await alexaQuery.login("testuser", ""), isFalse);
     });
 
     test('Login function', () async {

@@ -8,6 +8,6 @@ void main() async {
   );
   // var devices = await alexaQuery.getDeviceList("testuser");
   // print(devices[1]);
-  var queue = await alexaQuery.getQueue("testuser", "Kitchen Dot");
-  print(queue.infoText?.title!);
+  var devices = await alexaQuery.getDevices("testuser");
+  print(devices);
 }

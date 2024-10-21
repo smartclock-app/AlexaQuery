@@ -9,6 +9,7 @@ class QueryClient {
   String _csrf = "";
   late final Dio _client;
   late final File _cookieFile;
+  String? loginToken;
 
   /// Logger function.
   /// By default, it prints logs to the console with the format: `AlexaQuery[$level]: $log`.
@@ -16,20 +17,21 @@ class QueryClient {
   Function(String log, String level) _logger = (String log, String info) => print("AlexaQuery[$info]: $log");
 
   /// Creates a new [QueryClient] instance.
-  QueryClient(this._cookieFile, {Function(String log, String level)? logger}) {
+  QueryClient(this._cookieFile, {Function(String log, String level)? logger, String? loginToken}) {
     if (logger != null) _logger = logger;
-    if (!_cookieFile.existsSync()) throw Exception("Cookie file not found");
+    if (loginToken != null) this.loginToken = loginToken;
+    if (!_cookieFile.existsSync()) _cookieFile.createSync();
     try {
       final cookies = _cookieFile.readAsStringSync();
+      _logger("Loading cookies from '${_cookieFile.absolute.path}'", "info");
       if (cookies.isNotEmpty) {
         _cookies = jsonDecode(cookies).cast<String, String>();
-        _logger("Loaded cookies from file", "info");
       } else {
-        _logger("Cookie file empty", "info");
+        _logger("'${_cookieFile.absolute.path}' empty", "info");
         _cookies = {};
       }
     } catch (e) {
-      _logger("Error loading cookie file: $e", "warn");
+      _logger("Error loading cookies from '${_cookieFile.absolute.path}': $e", "warn");
       _cookies = {};
     }
 
@@ -60,7 +62,7 @@ class QueryClient {
   /// Checks the status of the user with the given [userId].
   ///
   /// Returns a [Future] that resolves to a [bool] indicating whether the user is logged in.
-  Future<bool> checkStatus(String userId) async {
+  Future<bool> _checkStatus(String userId) async {
     var response = await _client.get(
       "https://alexa.amazon.co.uk/api/bootstrap?version=0",
       options: Options(
@@ -76,18 +78,28 @@ class QueryClient {
   }
 
   /// Retrieves Amazon cookie using [token].
+  /// If [token] is not provided, it will use the token provided during the initialization of the client.
   ///
-  /// Calls [checkStatus] to check if the user is already logged in before proceeding.
+  /// Checks if the user is already logged in before proceeding.
   ///
   /// Throws an [Exception] if a CSRF token is not found during the process.
+  /// Throws an [Exception] if both [token] and [QueryClient.loginToken] are null.
   /// Otherwise, returns a [Future] that resolves to a [bool] indicating whether the login was successful.
-  Future<bool?> login(String userId, String token) async {
-    _logger("Logging in user: $userId", 'trace');
-
-    if (await checkStatus(userId)) {
-      _logger("Already logged in", 'trace');
+  Future<bool?> login(String userId, String? token) async {
+    if (await _checkStatus(userId)) {
+      _logger("Check Status: $userId already logged in", 'trace');
       return true;
     }
+
+    if (token == null && loginToken != null) {
+      token = loginToken;
+    } else {
+      if (token == null) {
+        throw Exception("No token provided");
+      }
+    }
+
+    _logger("Logging in user: $userId", 'trace');
 
     final response = await _client.post(
       "https://api.amazon.co.uk/ap/exchangetoken/cookies",
@@ -160,8 +172,9 @@ class QueryClient {
   ///
   /// Throws an [Exception] if the user is not logged in.
   /// Otherwise, returns a [Future] that resolves to a list of [Device] objects.
-  Future<List<Device>> getDeviceList(String userId) async {
-    if (_cookies[userId] == null) throw Exception("User not logged in");
+  Future<List<Device>> getDevices(String userId) async {
+    final isLoggedIn = await login(userId, null);
+    if (!isLoggedIn!) throw Exception("User not logged in");
 
     final response = await _client.get("https://alexa.amazon.co.uk/api/devices-v2/device?cached=false",
         options: Options(
@@ -198,7 +211,8 @@ class QueryClient {
   /// Throws an [Exception] if the user is not logged in.
   /// Otherwise, returns a [Future] that resolves to a list of [Notification] objects.
   Future<List<Notification>> getNotifications(String userId) async {
-    if (_cookies[userId] == null) throw Exception("User not logged in");
+    final isLoggedIn = await login(userId, null);
+    if (!isLoggedIn!) throw Exception("User not logged in");
 
     final response = await _client.get("https://alexa.amazon.co.uk/api/notifications",
         options: Options(
@@ -218,17 +232,17 @@ class QueryClient {
 
   /// Retrieves the player queue associated with the specified user ID.
   ///
-  /// The [serialNumber] and [deviceType] parameters are used to identify the device.
-  /// These can be obtained from the [Device] object.
+  /// [deviceName] can be obtained from the [Device] object.
   ///
   /// Includes a timestamp from the Date header in UTC.
   ///
   /// Throws an [Exception] if the user is not logged in.
-  /// Otherwise, eturns a [Future] that resolves to a [Queue] object.
+  /// Otherwise, returns a [Future] that resolves to a [Queue] object.
   Future<Queue> getQueue(String userId, String deviceName) async {
-    if (_cookies[userId] == null) throw Exception("User not logged in");
+    final isLoggedIn = await login(userId, null);
+    if (!isLoggedIn!) throw Exception("User not logged in");
 
-    final devices = await getDeviceList(userId);
+    final devices = await getDevices(userId);
     final device = devices.firstWhere((device) => device.accountName == deviceName, orElse: () => Device.empty());
     if (device.isEmpty) return Queue.empty();
 
