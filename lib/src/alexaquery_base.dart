@@ -13,7 +13,7 @@ class QueryClient {
   late final File _cookieFile;
   final Mutex _mutex = Mutex();
   String? loginToken;
-  DateTime? lastSucessfulLogin;
+  DateTime? _lastSucessfulLogin;
 
   /// Logger function.
   /// By default, it prints logs to the console with the format: `AlexaQuery[$level]: $log`.
@@ -92,8 +92,8 @@ class QueryClient {
     final now = DateTime.now();
 
     final status = await _mutex.protect(() async {
-      if (lastSucessfulLogin != null) {
-        final diff = now.difference(lastSucessfulLogin!);
+      if (_lastSucessfulLogin != null) {
+        final diff = now.difference(_lastSucessfulLogin!);
         if (diff.inSeconds < 15) {
           return true;
         }
@@ -101,7 +101,7 @@ class QueryClient {
 
       if (await _checkStatus(userId)) {
         _logger("Check Status: $userId logged in", 'trace');
-        lastSucessfulLogin = now;
+        _lastSucessfulLogin = now;
         return true;
       } else {
         return false;
@@ -186,7 +186,7 @@ class QueryClient {
 
     _cookieFile.writeAsStringSync(jsonEncode(_cookies), mode: FileMode.writeOnly);
 
-    lastSucessfulLogin = now;
+    _lastSucessfulLogin = now;
     return true;
   }
 
