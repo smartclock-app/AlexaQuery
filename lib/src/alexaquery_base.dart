@@ -13,7 +13,7 @@ class QueryClient {
   late final File _cookieFile;
   final Mutex _mutex = Mutex();
   String? loginToken;
-  DateTime? _lastSucessfulLogin;
+  (DateTime, bool)? _lastLogin;
 
   /// Logger function.
   /// By default, it prints logs to the console with the format: `AlexaQuery[$level]: $log`.
@@ -89,105 +89,98 @@ class QueryClient {
   /// Throws an [Exception] if both [token] and [QueryClient.loginToken] are null.
   /// Otherwise, returns a [Future] that resolves to a [bool] indicating whether the login was successful.
   Future<bool?> login(String userId, String? token) async {
-    final now = DateTime.now();
+    final loggedIn = await _mutex.protect(() async {
+      if (_lastLogin != null) {
+        final diff = DateTime.now().difference(_lastLogin!.$1);
+        if (diff.inSeconds < 15) return _lastLogin!.$2;
+      }
 
-    final status = await _mutex.protect(() async {
-      if (_lastSucessfulLogin != null) {
-        final diff = now.difference(_lastSucessfulLogin!);
-        if (diff.inSeconds < 15) {
-          return true;
+      _logger("Checking status for user: $userId", 'trace');
+      final status = await _checkStatus(userId);
+
+      if (status == true) return true;
+
+      if (token == null) {
+        if (loginToken != null) {
+          token = loginToken;
+        } else {
+          _logger("No token provided", "error");
+          return false;
         }
       }
 
-      if (await _checkStatus(userId)) {
-        _logger("Check Status: $userId logged in", 'trace');
-        _lastSucessfulLogin = now;
-        return true;
-      } else {
-        return false;
-      }
-    });
+      _logger("Logging in user: $userId", 'trace');
 
-    if (status == true) {
-      return true;
-    }
-
-    if (token == null && loginToken != null) {
-      token = loginToken;
-    } else {
-      if (token == null) {
-        throw Exception("No token provided");
-      }
-    }
-
-    _logger("Logging in user: $userId", 'trace');
-
-    final response = await _client.post(
-      "https://api.amazon.co.uk/ap/exchangetoken/cookies",
-      options: Options(
-        contentType: "application/x-www-form-urlencoded",
-        headers: {
-          "x-amzn-identity-auth-domain": "api.amazon.co.uk",
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      ),
-      data: {
-        "app_name": "Amazon Alexa",
-        "requested_token_type": "auth_cookies",
-        "domain": "www.amazon.co.uk",
-        "source_token_type": "refresh_token",
-        "source_token": token,
-      },
-    );
-
-    if (response.statusCode != 200) {
-      _logger("Login failed with status code: ${response.statusCode}", 'warn');
-      return false;
-    }
-
-    _cookies[userId] = _parseCookiesFromJson(response.data);
-
-    List<String> csrfUrls = [
-      "https://alexa.amazon.co.uk/api/language",
-      "https://alexa.amazon.co.uk/templates/oobe/d-device-pick.handlebars",
-      "https://alexa.amazon.co.uk/api/devices-v2/device?cached=false",
-    ];
-
-    bool csrfTokenExists = false;
-
-    for (String url in csrfUrls) {
-      final response = await _client.get(
-        url,
+      final response = await _client.post(
+        "https://api.amazon.co.uk/ap/exchangetoken/cookies",
         options: Options(
+          contentType: "application/x-www-form-urlencoded",
           headers: {
-            "DNT": 1,
-            "Connection": "keep-alive",
-            "Referer": "https://alexa.amazon.co.uk/spa/index.html",
-            "Origin": "https://alexa.amazon.co.uk",
-            "Cookie": _cookies[userId]!,
+            "x-amzn-identity-auth-domain": "api.amazon.co.uk",
+            "Content-Type": "application/x-www-form-urlencoded",
           },
         ),
+        data: {
+          "app_name": "Amazon Alexa",
+          "requested_token_type": "auth_cookies",
+          "domain": "www.amazon.co.uk",
+          "source_token_type": "refresh_token",
+          "source_token": token,
+        },
       );
 
-      if (response.headers["set-cookie"] != null && response.headers["set-cookie"]!.join("; ").contains("csrf=")) {
-        final csrf = response.headers["set-cookie"]![0].split(" ")[0];
-        _cookies[userId] = _cookies[userId]! + csrf;
-        _csrf = csrf.split("=")[1];
-        csrfTokenExists = true;
-        break;
+      if (response.statusCode != 200) {
+        _logger("Login failed with status code: ${response.statusCode}", 'warn');
+        return false;
       }
 
-      if (csrfTokenExists) break;
-    }
+      _cookies[userId] = _parseCookiesFromJson(response.data);
 
-    if (!csrfTokenExists) {
-      throw Exception("CSRF Token not found");
-    }
+      List<String> csrfUrls = [
+        "https://alexa.amazon.co.uk/api/language",
+        "https://alexa.amazon.co.uk/templates/oobe/d-device-pick.handlebars",
+        "https://alexa.amazon.co.uk/api/devices-v2/device?cached=false",
+      ];
 
-    _cookieFile.writeAsStringSync(jsonEncode(_cookies), mode: FileMode.writeOnly);
+      bool csrfTokenExists = false;
 
-    _lastSucessfulLogin = now;
-    return true;
+      for (String url in csrfUrls) {
+        final response = await _client.get(
+          url,
+          options: Options(
+            headers: {
+              "DNT": 1,
+              "Connection": "keep-alive",
+              "Referer": "https://alexa.amazon.co.uk/spa/index.html",
+              "Origin": "https://alexa.amazon.co.uk",
+              "Cookie": _cookies[userId]!,
+            },
+          ),
+        );
+
+        if (response.headers["set-cookie"] != null && response.headers["set-cookie"]!.join("; ").contains("csrf=")) {
+          final csrf = response.headers["set-cookie"]![0].split(" ")[0];
+          _cookies[userId] = _cookies[userId]! + csrf;
+          _csrf = csrf.split("=")[1];
+          csrfTokenExists = true;
+          break;
+        }
+
+        if (csrfTokenExists) break;
+      }
+
+      if (!csrfTokenExists) {
+        _logger("CSRF Token not found", 'error');
+        return false;
+      }
+
+      _cookieFile.writeAsStringSync(jsonEncode(_cookies), mode: FileMode.writeOnly);
+
+      return true;
+    });
+
+    _lastLogin = (DateTime.now(), loggedIn);
+    return loggedIn;
   }
 
   /// Retrieves a list of devices associated with the specified user ID.
@@ -196,7 +189,7 @@ class QueryClient {
   /// Otherwise, returns a [Future] that resolves to a list of [Device] objects.
   Future<List<Device>> getDevices(String userId) async {
     final isLoggedIn = await login(userId, null);
-    if (!isLoggedIn!) throw Exception("User not logged in");
+    if (!(isLoggedIn ?? false)) throw Exception("User not logged in");
 
     final response = await _client.get("https://alexa.amazon.co.uk/api/devices-v2/device?cached=false",
         options: Options(
@@ -209,12 +202,7 @@ class QueryClient {
           },
         ));
 
-    // const List<String> deviceFamilies = ["ECHO", "ROOK", "KNIGHT"];
-
     final List<Device> devices = (response.data["devices"] as List<dynamic>)
-        // .where((device) {
-        //   return deviceFamilies.contains(device["deviceFamily"]);
-        // })
         .map((device) => Device(
               accountName: device['accountName']!,
               deviceFamily: device['deviceFamily']!,

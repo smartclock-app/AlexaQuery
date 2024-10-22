@@ -5,6 +5,7 @@ void main() async {
   final alexaQuery = QueryClient(
     File('cookies.txt'),
     logger: (log, level) => print("$level: $log"),
+    loginToken: "",
   );
   var devices = await alexaQuery.getDevices("testuser");
   print(devices);

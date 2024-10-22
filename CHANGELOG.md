@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.3
+
+`QueryClient._lastSuccessfulLogin` has been renamed to `QueryClient._lastLogin`.
+`QueryClient._lastLogin` is updated on every login attempt, successful or not.
+Now the client will only attempt a login if the last login was more than 15 seconds ago.
+
 ## 3.0.2
 
 `QueryClient.lastSuccessfulLogin` has been renamed to `QueryClient._lastSuccessfulLogin` and is no longer accessible from outside the class.
