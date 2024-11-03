@@ -1,5 +1,4 @@
 part 'queue_type.dart';
-part 'memories_type.dart';
 
 class Device {
   final String accountName;
@@ -37,6 +36,21 @@ class Device {
   }
 
   bool get isEmpty => accountName.isEmpty || deviceType.isEmpty || serialNumber.isEmpty || deviceFamily.isEmpty;
+}
+
+class Memory {
+  final DateTime? updatedDateTime;
+  final String? value;
+
+  Memory({
+    this.updatedDateTime,
+    this.value,
+  });
+
+  factory Memory.fromJson(Map<String, dynamic> json) => Memory(
+        updatedDateTime: json["updatedDateTime"] == null ? null : DateTime.parse(json["updatedDateTime"]),
+        value: json["value"],
+      );
 }
 
 class Notification {

@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.0.1
+
+Make `Queue` non-final.
+Parse `Memory` from `QueryClient.getMemories`.
+
 ## 4.0.0
 
 Added `QueryClient.getMemories` to get the memories (notes) list.

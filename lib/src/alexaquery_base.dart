@@ -217,7 +217,7 @@ class QueryClient {
   }
 
   /// Retrieves a list of memories associated with the specified user ID.
-  Future<dynamic> getMemories(String userId) async {
+  Future<List<Memory>> getMemories(String userId) async {
     final isLoggedIn = await login(userId, null);
     if (!isLoggedIn!) throw Exception("User not logged in");
 
@@ -234,7 +234,11 @@ class QueryClient {
           },
         ));
 
-    return response.data;
+    // List<Memory>.from(json["memories"]!.map((x) => Memory.fromJson(x)))
+
+    if (response.data["memories"] == null) return List.empty();
+
+    return (response.data["memories"] as List<dynamic>).map<Memory>((memory) => Memory.fromJson(memory)).toList();
   }
 
   /// Retrieves a list of notifications associated with the specified user ID.
@@ -258,6 +262,8 @@ class QueryClient {
             "csrf": _csrf,
           },
         ));
+
+    if (response.data["notifications"] == null) return List.empty();
 
     return (response.data["notifications"] as List<dynamic>).map<Notification>((notification) => Notification.fromJson(notification)).toList();
   }
