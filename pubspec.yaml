@@ -1,7 +1,7 @@
 name: alexaquery_dart
 description: A Dart library for querying Alexa devices.
-version: 3.0.3
-repository: https://github.com/smartclock-app/alexaquery-dart
+version: 4.0.0
+repository: https://github.com/smartclock-app/AlexaQuery
 
 environment:
   sdk: ^3.4.3

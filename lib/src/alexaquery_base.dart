@@ -6,7 +6,7 @@ import 'package:mutex/mutex.dart';
 import 'alexaquery_types.dart';
 
 class QueryClient {
-  static final String _browser = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0";
+  static final String _browser = "AppleWebKit PitanguiBridge/2.2.632832.0-[HARDWARE=iPhone14_5][SOFTWARE=18.0.1][DEVICE=iPhone]";
   late final Map<String, String> _cookies;
   String _csrf = "";
   late final Dio _client;
@@ -216,6 +216,27 @@ class QueryClient {
     return devices;
   }
 
+  /// Retrieves a list of memories associated with the specified user ID.
+  Future<dynamic> getMemories(String userId) async {
+    final isLoggedIn = await login(userId, null);
+    if (!isLoggedIn!) throw Exception("User not logged in");
+
+    final response = await _client.post("https://alexa.amazon.co.uk/api/memories/search?maxResults=50&sortCriteria=CREATED_REVERSE",
+        options: Options(
+          headers: {
+            "DNT": "1",
+            "User-Agent": _browser,
+            "Referer": "https://alexa.amazon.co.uk/spa/index.html",
+            "Origin": "https://alexa.amazon.co.uk",
+            "Content-Type": "application/json; charset=UTF-8",
+            "Cookie": _cookies[userId],
+            "csrf": _csrf,
+          },
+        ));
+
+    return response.data;
+  }
+
   /// Retrieves a list of notifications associated with the specified user ID.
   ///
   /// Throws an [Exception] if the user is not logged in.
@@ -255,16 +276,9 @@ class QueryClient {
 
     final devices = await getDevices(userId);
     final device = devices.firstWhere((device) => device.accountName == deviceName, orElse: () => Device.empty());
-    if (device.isEmpty) return Queue.empty();
+    if (device.isEmpty) return Queue();
 
-    String parent = "";
-    final parentId = device.parentClusters.isNotEmpty ? device.parentClusters.first : null;
-    if (parentId != null) {
-      final parentDevice = devices.firstWhere((device) => device.serialNumber == parentId);
-      parent = "&lemurId=$parentId&lemurDeviceType=${parentDevice.deviceType}";
-    }
-
-    final url = "https://alexa.amazon.co.uk/api/np/player?deviceSerialNumber=${device.serialNumber}&deviceType=${device.deviceType}$parent";
+    final url = "https://alexa.amazon.co.uk/api/np/list-media-sessions?deviceSerialNumber=${device.serialNumber}&deviceType=${device.deviceType}";
     final response = await _client.get(url,
         options: Options(
           headers: {
@@ -278,12 +292,31 @@ class QueryClient {
           },
         ));
 
-    DateTime timestamp = HttpDate.parse(response.headers.value("Date")!);
+    if (response.data["mediaSessionList"] == null) return Queue();
 
-    if (response.data["playerInfo"] == null || response.data["playerInfo"]['state'] == null) {
-      return Queue.empty();
+    final sessionList = response.data["mediaSessionList"] as List<dynamic>;
+    if (sessionList.isEmpty) return Queue();
+
+    final session = sessionList.firstWhere((session) {
+      final endpointList = session?["endpointList"];
+
+      final sessionIncludesDevice = endpointList?.any((endpoint) {
+        final endpointSerial = endpoint["id"]?["deviceSerialNumber"];
+        final endpointType = endpoint["id"]?["deviceType"];
+
+        return endpointSerial == device.serialNumber && endpointType == device.deviceType;
+      });
+
+      return sessionIncludesDevice ?? false;
+    }, orElse: () => null);
+
+    final Map<String, dynamic>? nowplaying = session?["nowPlayingData"];
+
+    if (nowplaying?["playerState"] == null) {
+      return Queue();
     }
 
-    return Queue.fromJson(response.data["playerInfo"], timestamp);
+    DateTime timestamp = HttpDate.parse(response.headers.value("Date")!);
+    return Queue.fromJson(nowplaying!, timestamp);
   }
 }

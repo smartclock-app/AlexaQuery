@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.0.0
+
+Added `QueryClient.getMemories` to get the memories (notes) list.
+
+INTERFACE CHANGED:
+
+`QueryClient.getQueue` data changed from Alexa's `/api/np/player` to `/api/np/list-media-sessions`.
+This mirrors the data structure of the Alexa app and allows for more accurate queue information.
+
 ## 3.0.3
 
 `QueryClient._lastSuccessfulLogin` has been renamed to `QueryClient._lastLogin`.
